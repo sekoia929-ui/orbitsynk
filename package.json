@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "VERCEL_FORCE_NO_BUILD_CACHE=1 next build",
+    "build": "rm -rf .next && VERCEL_FORCE_NO_BUILD_CACHE=1 next build",
     "start": "next start",
     "lint": "next lint",
     "db:push": "drizzle-kit push",
