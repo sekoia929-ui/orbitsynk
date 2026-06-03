@@ -1,4 +1,4 @@
-import { pgTable, uuid, text, boolean, integer, jsonb, timestamp, unique } from 'drizzle-orm/pg-core'
+import { pgTable, uuid, text, boolean, integer, jsonb, timestamp, unique, index } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
 // ─── ORGANIZATIONS ────────────────────────────────────────────────────────────
@@ -9,6 +9,7 @@ export const organizations = pgTable('organizations', {
   email: text('email').notNull(),
   plan: text('plan').notNull().default('starter'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
 })
 
 // ─── BILLING CONNECTIONS ──────────────────────────────────────────────────────
@@ -21,7 +22,9 @@ export const billingConnections = pgTable('billing_connections', {
   storeId: text('store_id'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (table) => ({
+  orgProviderIdx: index('billing_connections_org_provider_idx').on(table.orgId, table.provider),
+}))
 
 // ─── COMMUNITY CONNECTIONS ────────────────────────────────────────────────────
 export const communityConnections = pgTable('community_connections', {
@@ -33,28 +36,33 @@ export const communityConnections = pgTable('community_connections', {
   communityName: text('community_name'),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+}, (table) => ({
+  orgPlatformIdx: index('community_connections_org_platform_idx').on(table.orgId, table.platform),
+}))
 
 // ─── AUTOMATION RULES ─────────────────────────────────────────────────────────
 export const automationRules = pgTable('automation_rules', {
   id: uuid('id').primaryKey().defaultRandom(),
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
   name: text('name').notNull(),
-  billingConnectionId: uuid('billing_connection_id').notNull(),
-  communityConnectionId: uuid('community_connection_id').notNull(),
+  billingConnectionId: uuid('billing_connection_id').references(() => billingConnections.id, { onDelete: 'cascade' }).notNull(),
+  communityConnectionId: uuid('community_connection_id').references(() => communityConnections.id, { onDelete: 'cascade' }).notNull(),
   triggerEvent: text('trigger_event').notNull(),
   triggerProductId: text('trigger_product_id'),
   actionType: text('action_type').notNull(),
   gracePeriodDays: integer('grace_period_days').default(0).notNull(),
   isActive: boolean('is_active').default(true).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull(),
-})
+  updatedAt: timestamp('updated_at').defaultNow().notNull(),
+}, (table) => ({
+  orgIdx: index('automation_rules_org_idx').on(table.orgId),
+}))
 
 // ─── EVENT LOGS ───────────────────────────────────────────────────────────────
 export const eventLogs = pgTable('event_logs', {
   id: uuid('id').primaryKey().defaultRandom(),
-  orgId: uuid('org_id').notNull(),
-  ruleId: uuid('rule_id'),
+  orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  ruleId: uuid('rule_id').references(() => automationRules.id, { onDelete: 'set null' }),
   billingProvider: text('billing_provider').notNull(),
   eventType: text('event_type').notNull(),
   eventId: text('event_id').notNull().unique(),
@@ -65,12 +73,17 @@ export const eventLogs = pgTable('event_logs', {
   memberEmail: text('member_email'),
   memberName: text('member_name'),
   processedAt: timestamp('processed_at').defaultNow().notNull(),
-})
+}, (table) => ({
+  orgIdx: index('event_logs_org_idx').on(table.orgId),
+  memberEmailIdx: index('event_logs_member_email_idx').on(table.memberEmail),
+  eventTypeIdx: index('event_logs_event_type_idx').on(table.eventType),
+}))
 
 // ─── MEMBER SYNC STATE ────────────────────────────────────────────────────────
 export const memberSync = pgTable('member_sync', {
   id: uuid('id').primaryKey().defaultRandom(),
   orgId: uuid('org_id').references(() => organizations.id, { onDelete: 'cascade' }).notNull(),
+  ruleId: uuid('rule_id').references(() => automationRules.id, { onDelete: 'set null' }),
   email: text('email').notNull(),
   memberName: text('member_name'),
   billingCustomerId: text('billing_customer_id'),
@@ -80,6 +93,8 @@ export const memberSync = pgTable('member_sync', {
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
 }, (table) => ({
   uniqueOrgEmail: unique().on(table.orgId, table.email),
+  accessStatusIdx: index('member_sync_access_status_idx').on(table.accessStatus),
+  gracePeriodIdx: index('member_sync_grace_period_idx').on(table.gracePeriodEndsAt),
 }))
 
 // ─── WAITLIST ─────────────────────────────────────────────────────────────────
@@ -144,6 +159,10 @@ export const memberSyncRelations = relations(memberSync, ({ one }) => ({
   org: one(organizations, {
     fields: [memberSync.orgId],
     references: [organizations.id],
+  }),
+  rule: one(automationRules, {
+    fields: [memberSync.ruleId],
+    references: [automationRules.id],
   }),
 }))
 

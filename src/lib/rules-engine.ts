@@ -1,236 +1,310 @@
-import { db, automationRules, communityConnections, billingConnections, eventLogs, memberSync } from './db'
-import { eq, and } from 'drizzle-orm'
-import { decrypt } from './encrypt'
-import { CircleAdapter } from './adapters/circle'
-import { SkoolAdapter } from './adapters/skool'
+import { db, automationRules, billingConnections, communityConnections, eventLogs, memberSync } from '@/lib/db'
+import { eq, and, lte, isNotNull } from 'drizzle-orm'
+import { decrypt } from '@/lib/encrypt'
+import { CircleAdapter } from '@/lib/adapters/circle'
+import { SkoolAdapter } from '@/lib/adapters/skool'
+import type { CommunityAdapter } from '@/lib/adapters/adapter-types'
 
 // ─── TYPES ────────────────────────────────────────────────────────────────────
 
 export type BillingEventType =
   | 'subscription.created'
-  | 'subscription.cancelled'
   | 'subscription.updated'
-  | 'payment.success'
+  | 'subscription.cancelled'
+  | 'subscription.expired'
+  | 'subscription.paused'
+  | 'subscription.resumed'
   | 'payment.failed'
+  | 'payment.success'
 
-interface BillingEvent {
-  provider: 'lemon_squeezy' | 'paddle'
-  eventId: string
+export type ActionType = 'grant_access' | 'revoke_access' | 'sync_access'
+
+export interface BillingEvent {
+  orgId: string
+  billingProvider: string
+  billingConnectionId: string
   eventType: BillingEventType
+  eventId: string
   memberEmail: string
   memberName?: string
-  billingCustomerId?: string
   productId?: string
-  orgId: string
-  billingConnectionId: string
-  rawPayload: object
+  subscriptionStatus?: string
+  rawPayload: Record<string, unknown>
 }
 
-// ─── MAIN RULES ENGINE ────────────────────────────────────────────────────────
+// ─── ADAPTER FACTORY ─────────────────────────────────────────────────────────
+
+function getCommunityAdapter(platform: string, apiKey: string, communityId: string): CommunityAdapter {
+  const config = { apiKey, communityId }
+  switch (platform) {
+    case 'circle':
+      return new CircleAdapter(config)
+    case 'skool':
+      return new SkoolAdapter(config)
+    default:
+      throw new Error(`Unsupported community platform: ${platform}`)
+  }
+}
+
+// ─── RULE EXECUTION ───────────────────────────────────────────────────────────
+
+async function executeAction(
+  adapter: CommunityAdapter,
+  actionType: ActionType,
+  email: string,
+  memberName?: string,
+  subscriptionStatus?: string
+) {
+  switch (actionType) {
+    case 'grant_access':
+      return adapter.grantAccess(email, memberName)
+
+    case 'revoke_access':
+      return adapter.revokeAccess(email)
+
+    case 'sync_access': {
+      // For subscription.updated — grant if active, revoke if not
+      const activeStatuses = ['active', 'trialing', 'on_trial', 'paused']
+      const isActive = activeStatuses.includes(subscriptionStatus?.toLowerCase() ?? '')
+      if (isActive) {
+        return adapter.grantAccess(email, memberName)
+      } else {
+        return adapter.revokeAccess(email)
+      }
+    }
+
+    default:
+      return { success: false, message: `Unknown action type: ${actionType}` }
+  }
+}
+
+// ─── MAIN EVENT PROCESSOR ────────────────────────────────────────────────────
 
 export async function processEvent(event: BillingEvent): Promise<void> {
-  console.log(`[RulesEngine] Processing ${event.eventType} for ${event.memberEmail}`)
+  console.log(`[RulesEngine] Processing event: ${event.eventType} for ${event.memberEmail}`)
 
-  // Find all active matching rules for this org + event type
+  // Find all active rules for this org + billing connection that match this event
   const rules = await db.query.automationRules.findMany({
     where: and(
       eq(automationRules.orgId, event.orgId),
-      eq(automationRules.triggerEvent, event.eventType),
-      eq(automationRules.isActive, true)
+      eq(automationRules.billingConnectionId, event.billingConnectionId),
+      eq(automationRules.isActive, true),
+      eq(automationRules.triggerEvent, event.eventType)
     ),
     with: {
       communityConnection: true,
-    }
+    },
   })
 
-  if (rules.length === 0) {
-    console.log(`[RulesEngine] No matching rules for ${event.eventType}`)
-    await logEvent(event, null, null, 'skipped', undefined, 'No matching rules')
+  const matchingRules = rules.filter(rule => {
+    // If rule specifies a product, filter to that product only
+    if (rule.triggerProductId && event.productId) {
+      return rule.triggerProductId === event.productId
+    }
+    return true
+  })
+
+  if (matchingRules.length === 0) {
+    console.log(`[RulesEngine] No matching rules for event ${event.eventType}`)
+    // Still log the event even if no rules matched
+    await db.insert(eventLogs).values({
+      orgId: event.orgId,
+      billingProvider: event.billingProvider,
+      eventType: event.eventType,
+      eventId: event.eventId,
+      rawPayload: event.rawPayload,
+      memberEmail: event.memberEmail,
+      memberName: event.memberName,
+      actionTaken: 'none',
+      actionResult: 'No matching rules found',
+    }).onConflictDoNothing()
     return
   }
 
-  // Execute each matching rule
-  for (const rule of rules) {
-    await executeRule(rule, event)
-  }
+  // Execute all matching rules in parallel
+  const results = await Promise.allSettled(
+    matchingRules.map(rule => executeRule(rule, event))
+  )
+
+  results.forEach((result, i) => {
+    if (result.status === 'rejected') {
+      console.error(`[RulesEngine] Rule ${matchingRules[i].id} failed:`, result.reason)
+    }
+  })
 }
 
-// ─── EXECUTE A SINGLE RULE ────────────────────────────────────────────────────
+async function executeRule(
+  rule: typeof automationRules.$inferSelect & {
+    communityConnection: typeof communityConnections.$inferSelect
+  },
+  event: BillingEvent
+): Promise<void> {
+  const conn = rule.communityConnection
+  const actionType = rule.actionType as ActionType
 
-async function executeRule(rule: any, event: BillingEvent): Promise<void> {
-  // Optional: filter by product ID
-  if (rule.triggerProductId && rule.triggerProductId !== event.productId) {
-    console.log(`[RulesEngine] Skipping rule ${rule.id} — product ID mismatch`)
-    return
-  }
-
-  // FIX 5: Key each log row by event + rule so multiple rules produce separate rows
-  const ruleEventId = `${event.eventId}__rule_${rule.id}`
-
+  // Decrypt the API key
+  let decryptedKey: string
   try {
-    const adapter = await getCommunityAdapter(rule.communityConnection)
+    decryptedKey = decrypt(conn.apiKey)
+  } catch (err) {
+    console.error(`[RulesEngine] Failed to decrypt API key for connection ${conn.id}:`, err)
+    await logEvent(event, rule.id, actionType, 'failed', 'Failed to decrypt API key')
+    return
+  }
 
-    switch (rule.actionType) {
-      case 'grant_access': {
-        await adapter.grantAccess(event.memberEmail, event.memberName)
-        await updateMemberSync(event, 'granted')
-        await logEvent({ ...event, eventId: ruleEventId }, rule.id, rule.communityConnection.platform, 'success', 'grant_access')
-        console.log(`[RulesEngine] ✅ Granted access to ${event.memberEmail}`)
-        break
-      }
+  const adapter = getCommunityAdapter(conn.platform, decryptedKey, conn.communityId)
 
-      case 'revoke_access': {
-        if (rule.gracePeriodDays > 0) {
-          const gracePeriodEndsAt = new Date()
-          gracePeriodEndsAt.setDate(gracePeriodEndsAt.getDate() + rule.gracePeriodDays)
-          await updateMemberSync(event, 'grace_period', gracePeriodEndsAt)
-          await logEvent(
-            { ...event, eventId: ruleEventId },
-            rule.id, rule.communityConnection.platform, 'success', 'grace_period_started',
-            `Access revoke scheduled for ${gracePeriodEndsAt.toISOString()}`
-          )
-          console.log(`[RulesEngine] ⏳ Grace period started for ${event.memberEmail} until ${gracePeriodEndsAt}`)
-        } else {
-          await adapter.revokeAccess(event.memberEmail)
-          await updateMemberSync(event, 'revoked')
-          await logEvent({ ...event, eventId: ruleEventId }, rule.id, rule.communityConnection.platform, 'success', 'revoke_access')
-          console.log(`[RulesEngine] 🚫 Revoked access for ${event.memberEmail}`)
-        }
-        break
-      }
+  // Handle grace period for revoke_access
+  if (actionType === 'revoke_access' && rule.gracePeriodDays > 0) {
+    const gracePeriodEndsAt = new Date()
+    gracePeriodEndsAt.setDate(gracePeriodEndsAt.getDate() + rule.gracePeriodDays)
 
-      default:
-        console.warn(`[RulesEngine] Unknown action type: ${rule.actionType}`)
-    }
-  } catch (error) {
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    console.error(`[RulesEngine] ❌ Rule ${rule.id} failed:`, message)
-    await logEvent({ ...event, eventId: ruleEventId }, rule.id, null, 'failed', rule.actionType, message)
+    await db.insert(memberSync).values({
+      orgId: event.orgId,
+      ruleId: rule.id, // Track which rule triggered the grace period
+      email: event.memberEmail,
+      memberName: event.memberName,
+      subscriptionStatus: event.subscriptionStatus,
+      accessStatus: 'grace_period',
+      gracePeriodEndsAt,
+    }).onConflictDoUpdate({
+      target: [memberSync.orgId, memberSync.email],
+      set: {
+        ruleId: rule.id,
+        subscriptionStatus: event.subscriptionStatus,
+        accessStatus: 'grace_period',
+        gracePeriodEndsAt,
+        updatedAt: new Date(),
+      },
+    })
+
+    await logEvent(event, rule.id, actionType, 'grace_period',
+      `Grace period of ${rule.gracePeriodDays} days applied. Access revoked on ${gracePeriodEndsAt.toISOString()}`)
+    return
+  }
+
+  // Execute the action
+  try {
+    const result = await executeAction(adapter, actionType, event.memberEmail, event.memberName, event.subscriptionStatus)
+    const status = result.success ? 'completed' : 'failed'
+
+    // Update member sync state
+    await db.insert(memberSync).values({
+      orgId: event.orgId,
+      ruleId: rule.id,
+      email: event.memberEmail,
+      memberName: event.memberName,
+      subscriptionStatus: event.subscriptionStatus,
+      accessStatus: actionType === 'grant_access' || (actionType === 'sync_access' && result.success) ? 'active' : 'inactive',
+    }).onConflictDoUpdate({
+      target: [memberSync.orgId, memberSync.email],
+      set: {
+        ruleId: rule.id,
+        subscriptionStatus: event.subscriptionStatus,
+        accessStatus: actionType === 'grant_access' ? 'active' : 'inactive',
+        gracePeriodEndsAt: null,
+        updatedAt: new Date(),
+      },
+    })
+
+    await logEvent(event, rule.id, actionType, status, result.message)
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    console.error(`[RulesEngine] Action failed for rule ${rule.id}:`, message)
+    await logEvent(event, rule.id, actionType, 'failed', message)
   }
 }
 
-// ─── GET ADAPTER FOR PLATFORM ─────────────────────────────────────────────────
+// ─── GRACE PERIOD CRON ───────────────────────────────────────────────────────
+// Called by /api/cron/grace-period — processes members whose grace period has ended
 
-async function getCommunityAdapter(connection: any): Promise<CircleAdapter | SkoolAdapter> {
-  const apiKey = decrypt(connection.apiKey)
-
-  switch (connection.platform) {
-    case 'circle':
-      return new CircleAdapter({ apiKey, communityId: connection.communityId })
-    case 'skool':
-      return new SkoolAdapter({ apiKey, communityId: connection.communityId })
-    default:
-      throw new Error(`Unsupported platform: ${connection.platform}`)
-  }
-}
-
-// ─── HELPER: LOG EVENT ────────────────────────────────────────────────────────
-
-async function logEvent(
-  event: BillingEvent,
-  ruleId: string | null,
-  platform: string | null,
-  result: 'success' | 'failed' | 'skipped',
-  actionTaken?: string,
-  errorMessage?: string
-) {
-  await db.insert(eventLogs).values({
-    orgId: event.orgId,
-    ruleId: ruleId || undefined,
-    billingProvider: event.provider,
-    eventType: event.eventType,
-    eventId: event.eventId,
-    rawPayload: event.rawPayload,
-    actionTaken: actionTaken || null,
-    actionResult: result,
-    errorMessage: errorMessage || null,
-    memberEmail: event.memberEmail,
-    memberName: event.memberName || null,
-  }).onConflictDoNothing() // idempotency — don't error on duplicate event IDs
-}
-
-// ─── HELPER: UPDATE MEMBER SYNC STATE ────────────────────────────────────────
-
-async function updateMemberSync(
-  event: BillingEvent,
-  accessStatus: 'granted' | 'revoked' | 'grace_period',
-  gracePeriodEndsAt?: Date
-) {
-  await db.insert(memberSync).values({
-    orgId: event.orgId,
-    email: event.memberEmail,
-    memberName: event.memberName || null,
-    billingCustomerId: event.billingCustomerId || null,
-    subscriptionStatus: mapEventToStatus(event.eventType),
-    accessStatus,
-    gracePeriodEndsAt: gracePeriodEndsAt || null,
-  })
-  .onConflictDoUpdate({
-    target: [memberSync.orgId, memberSync.email],
-    set: {
-      subscriptionStatus: mapEventToStatus(event.eventType),
-      accessStatus,
-      gracePeriodEndsAt: gracePeriodEndsAt || null,
-      updatedAt: new Date(),
-    }
-  })
-}
-
-function mapEventToStatus(eventType: string): string {
-  const map: Record<string, string> = {
-    'subscription.created': 'active',
-    'payment.success': 'active',
-    'subscription.cancelled': 'cancelled',
-    'payment.failed': 'past_due',
-    'subscription.paused': 'paused',
-  }
-  return map[eventType] || 'unknown'
-}
-
-// ─── GRACE PERIOD CRON JOB ───────────────────────────────────────────────────
-// Call this from /api/cron/grace-period every hour (set up in vercel.json)
-
-export async function processExpiredGracePeriods(): Promise<void> {
-  const { lt } = await import('drizzle-orm')
+export async function processExpiredGracePeriods(): Promise<{ processed: number; errors: number }> {
   const now = new Date()
+  let processed = 0
+  let errors = 0
 
+  // Find all members in grace_period whose time has expired
   const expired = await db.query.memberSync.findMany({
     where: and(
       eq(memberSync.accessStatus, 'grace_period'),
-      lt(memberSync.gracePeriodEndsAt, now)
-    )
+      isNotNull(memberSync.gracePeriodEndsAt),
+      lte(memberSync.gracePeriodEndsAt, now)
+    ),
   })
 
+  console.log(`[GracePeriodCron] Found ${expired.length} members with expired grace periods`)
+
   for (const member of expired) {
-    console.log(`[Cron] Grace period expired for ${member.email}`)
-
-    const rules = await db.query.automationRules.findMany({
-      where: and(
-        eq(automationRules.orgId, member.orgId),
-        eq(automationRules.isActive, true)
-      ),
-      with: { communityConnection: true }
-    })
-
-    for (const rule of rules) {
-      // FIX 6: Wrap each revoke independently — missing env vars won't stop other members
-      try {
-        const adapter = await getCommunityAdapter(rule.communityConnection)
-        await adapter.revokeAccess(member.email)
-        await db.update(memberSync)
-          .set({ accessStatus: 'revoked', updatedAt: now })
-          .where(eq(memberSync.id, member.id))
-        console.log(`[Cron] ✅ Revoked access for ${member.email}`)
-      } catch (err) {
-        // Log and continue — don't let one failure block other members
-        const msg = err instanceof Error ? err.message : String(err)
-        console.error(`[Cron] ❌ Failed to revoke ${member.email}: ${msg}`)
-        // Skip if it's a config error (e.g. missing RESEND_API_KEY) rather than an API error
-        if (msg.includes('RESEND') || msg.includes('environment') || msg.includes('env')) {
-          console.warn(`[Cron] Skipping — looks like a missing env var, not a platform error`)
-          continue
-        }
+    try {
+      // Use the specific rule that triggered the grace period
+      if (!member.ruleId) {
+        console.warn(`[GracePeriodCron] Member ${member.email} has no ruleId — skipping`)
+        continue
       }
+
+      const rule = await db.query.automationRules.findFirst({
+        where: eq(automationRules.id, member.ruleId),
+        with: { communityConnection: true },
+      })
+
+      if (!rule || !rule.isActive) {
+        // Rule was deleted or disabled — just mark member as inactive
+        await db.update(memberSync)
+          .set({ accessStatus: 'inactive', gracePeriodEndsAt: null, updatedAt: new Date() })
+          .where(eq(memberSync.id, member.id))
+        continue
+      }
+
+      const conn = rule.communityConnection
+      const decryptedKey = decrypt(conn.apiKey)
+      const adapter = getCommunityAdapter(conn.platform, decryptedKey, conn.communityId)
+
+      const result = await adapter.revokeAccess(member.email)
+
+      await db.update(memberSync)
+        .set({
+          accessStatus: result.success ? 'inactive' : 'grace_period',
+          gracePeriodEndsAt: result.success ? null : member.gracePeriodEndsAt,
+          updatedAt: new Date(),
+        })
+        .where(eq(memberSync.id, member.id))
+
+      if (result.success) {
+        processed++
+        console.log(`[GracePeriodCron] Revoked access for ${member.email}: ${result.message}`)
+      } else {
+        errors++
+        console.error(`[GracePeriodCron] Failed to revoke access for ${member.email}: ${result.message}`)
+      }
+    } catch (err) {
+      errors++
+      console.error(`[GracePeriodCron] Error processing ${member.email}:`, err)
     }
   }
+
+  return { processed, errors }
+}
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
+
+async function logEvent(
+  event: BillingEvent,
+  ruleId: string,
+  actionTaken: string,
+  actionResult: string,
+  message: string
+) {
+  await db.insert(eventLogs).values({
+    orgId: event.orgId,
+    ruleId,
+    billingProvider: event.billingProvider,
+    eventType: event.eventType,
+    eventId: event.eventId,
+    rawPayload: event.rawPayload,
+    memberEmail: event.memberEmail,
+    memberName: event.memberName,
+    actionTaken,
+    actionResult,
+    errorMessage: actionResult === 'failed' ? message : null,
+  }).onConflictDoNothing() // Idempotency — ignore duplicate events
 }

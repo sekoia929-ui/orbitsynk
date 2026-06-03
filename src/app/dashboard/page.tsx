@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Users, Zap, FileText, TrendingUp, CheckCircle2, XCircle, AlertCircle, RefreshCw } from 'lucide-react'
+import { useEffect, useState, useCallback } from 'react'
+import { Users, Zap, FileText, TrendingUp, CheckCircle2, XCircle, AlertCircle, RefreshCw, Loader2 } from 'lucide-react'
 
 interface Stats {
   totalMembers: number
@@ -37,21 +37,57 @@ function resultIcon(result: string) {
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+
+  const fetchStats = useCallback(async () => {
+    try {
+      const res = await fetch('/api/dashboard/stats')
+      if (!res.ok) throw new Error('Failed to fetch')
+      const data = await res.json()
+      setStats(data)
+      setError(false)
+      setLastUpdated(new Date())
+    } catch {
+      setError(true)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
 
   useEffect(() => {
-    fetch('/api/dashboard/stats')
-      .then(r => r.json())
-      .then(data => { setStats(data); setLoading(false) })
-      .catch(() => setLoading(false))
-  }, [])
+    fetchStats()
+    // Poll every 30 seconds for real-time updates
+    const interval = setInterval(fetchStats, 30_000)
+    return () => clearInterval(interval)
+  }, [fetchStats])
 
   return (
     <div className="p-8 max-w-6xl">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl font-bold text-white mb-1">Overview</h1>
-        <p className="text-white/40 text-sm">Your membership sync at a glance.</p>
+      <div className="mb-8 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold text-white mb-1">Overview</h1>
+          <p className="text-white/40 text-sm">
+            Your membership sync at a glance.
+            {lastUpdated && <span className="ml-2">Updated {lastUpdated.toLocaleTimeString()}</span>}
+          </p>
+        </div>
+        <button
+          onClick={fetchStats}
+          disabled={loading}
+          className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/50 text-xs transition-colors disabled:opacity-40"
+        >
+          {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <RefreshCw className="w-3.5 h-3.5" />}
+          Refresh
+        </button>
       </div>
+
+      {error && (
+        <div className="mb-6 p-4 bg-red-500/10 border border-red-500/20 rounded-2xl text-red-300 text-sm flex items-center gap-3">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          Failed to load stats. Check your connection.
+        </div>
+      )}
 
       {/* Stat Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -74,7 +110,7 @@ export default function DashboardPage() {
           <h2 className="text-[14px] font-semibold text-white">Recent Events</h2>
           <span className="flex items-center gap-1.5 text-[11px] text-emerald-400">
             <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-            Live
+            Auto-refreshes every 30s
           </span>
         </div>
 
