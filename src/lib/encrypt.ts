@@ -6,6 +6,15 @@ if (!ENCRYPTION_KEY) {
   throw new Error('ENCRYPTION_KEY environment variable is required. Set a 32-character random string.')
 }
 
+// AES-256 requires exactly 32 bytes. Validate at startup rather than silently
+// truncating (too long) or throwing a cryptic "Invalid key length" at call time (too short).
+if (Buffer.byteLength(ENCRYPTION_KEY, 'utf8') < 32) {
+  throw new Error(
+    `ENCRYPTION_KEY must be at least 32 bytes. Current length: ${Buffer.byteLength(ENCRYPTION_KEY, 'utf8')} bytes. ` +
+    'Run: openssl rand -hex 16'
+  )
+}
+
 // Key must be exactly 32 bytes for AES-256
 const key = Buffer.from(ENCRYPTION_KEY, 'utf8').slice(0, 32)
 

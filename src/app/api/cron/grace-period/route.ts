@@ -11,8 +11,8 @@ export async function GET(req: Request) {
   }
 
   try {
-    await processExpiredGracePeriods()
-    return NextResponse.json({ success: true, ran: new Date().toISOString() })
+    const result = await processExpiredGracePeriods()
+    return NextResponse.json({ success: true, ran: new Date().toISOString(), ...result })
   } catch (error) {
     console.error('[Cron] Grace period job failed:', error)
     return NextResponse.json({ error: 'Job failed' }, { status: 500 })

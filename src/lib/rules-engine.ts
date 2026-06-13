@@ -97,9 +97,11 @@ export async function processEvent(event: BillingEvent): Promise<void> {
   })
 
   const matchingRules = rules.filter(rule => {
-    // If rule specifies a product, filter to that product only
-    if (rule.triggerProductId && event.productId) {
-      return rule.triggerProductId === event.productId
+    // If rule specifies a product, only match events that carry a matching productId.
+    // If the event has no productId, a product-scoped rule must NOT fire — it would
+    // otherwise affect all subscribers instead of the intended product's subscribers.
+    if (rule.triggerProductId) {
+      return !!event.productId && rule.triggerProductId === event.productId
     }
     return true
   })
@@ -189,19 +191,25 @@ async function executeRule(
     const status = result.success ? 'completed' : 'failed'
 
     // Update member sync state
+    // Derive the resulting access status from the action + outcome
+    const resolvedAccessStatus =
+      actionType === 'revoke_access' ? 'inactive'
+      : actionType === 'grant_access' ? 'active'
+      : result.success ? 'active' : 'inactive' // sync_access: depends on what the adapter did
+
     await db.insert(memberSync).values({
       orgId: event.orgId,
       ruleId: rule.id,
       email: event.memberEmail,
       memberName: event.memberName,
       subscriptionStatus: event.subscriptionStatus,
-      accessStatus: actionType === 'grant_access' || (actionType === 'sync_access' && result.success) ? 'active' : 'inactive',
+      accessStatus: resolvedAccessStatus,
     }).onConflictDoUpdate({
       target: [memberSync.orgId, memberSync.email],
       set: {
         ruleId: rule.id,
         subscriptionStatus: event.subscriptionStatus,
-        accessStatus: actionType === 'grant_access' ? 'active' : 'inactive',
+        accessStatus: resolvedAccessStatus,
         gracePeriodEndsAt: null,
         updatedAt: new Date(),
       },
@@ -268,6 +276,21 @@ export async function processExpiredGracePeriods(): Promise<{ processed: number;
           updatedAt: new Date(),
         })
         .where(eq(memberSync.id, member.id))
+
+      // Log every cron-triggered revocation so it appears in the dashboard event log
+      await db.insert(eventLogs).values({
+        orgId: member.orgId,
+        ruleId: member.ruleId,
+        billingProvider: 'cron',
+        eventType: 'subscription.expired',
+        eventId: `cron:grace_period:${member.id}:${Date.now()}`,
+        rawPayload: { source: 'grace_period_cron', memberId: member.id },
+        memberEmail: member.email,
+        memberName: member.memberName ?? undefined,
+        actionTaken: 'revoke_access',
+        actionResult: result.success ? 'completed' : 'failed',
+        errorMessage: result.success ? null : result.message,
+      }).onConflictDoNothing()
 
       if (result.success) {
         processed++

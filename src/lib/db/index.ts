@@ -13,11 +13,15 @@ function getDb() {
   return drizzle(sql, { schema })
 }
 
-// Proxy that creates the connection on first use
+// Proxy that creates the connection on first use and caches it.
+// Without the cache, getDb() (and neon() + drizzle()) would be called on every
+// property access — e.g. db.query.X creates two objects per query.
+let _db: ReturnType<typeof getDb> | null = null
+
 export const db = new Proxy({} as ReturnType<typeof getDb>, {
   get(_target, prop) {
-    const realDb = getDb()
-    return (realDb as any)[prop]
+    _db ??= getDb()
+    return (_db as any)[prop]
   },
 })
 

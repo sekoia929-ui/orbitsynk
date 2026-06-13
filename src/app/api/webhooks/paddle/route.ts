@@ -9,7 +9,7 @@ const EVENT_MAP: Record<string, BillingEventType> = {
   'subscription.created':       'subscription.created',
   'subscription.updated':       'subscription.updated',
   'subscription.cancelled':     'subscription.cancelled',
-  'subscription.paused':        'subscription.cancelled',
+  'subscription.paused':        'subscription.paused',   // paused ≠ cancelled — maps to its own event type so rules can handle it separately
   'subscription.resumed':       'subscription.resumed',
   'transaction.completed':      'payment.success',
   'transaction.payment_failed': 'payment.failed',

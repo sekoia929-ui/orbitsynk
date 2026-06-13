@@ -8,6 +8,7 @@ const isPublicRoute = createRouteMatcher([
   '/sign-up(.*)',
   '/api/webhooks(.*)',   // webhooks — no auth from billing providers
   '/api/waitlist(.*)',   // waitlist — public landing page form
+  '/api/cron(.*)',       // cron — authenticated via CRON_SECRET header, not Clerk
 ])
 
 export default clerkMiddleware(async (auth, request) => {

@@ -37,12 +37,22 @@ async function getOrCreateOrg(clerkUserId: string) {
     const email = user?.emailAddresses?.[0]?.emailAddress ?? ''
     const name = `${user?.firstName ?? ''} ${user?.lastName ?? ''}`.trim() || 'My Org'
 
-    const [created] = await db.insert(organizations).values({
-      clerkUserId,
-      name,
-      email,
-    }).returning()
-    org = created
+    try {
+      const [created] = await db.insert(organizations).values({
+        clerkUserId,
+        name,
+        email,
+      }).returning()
+      org = created
+    } catch {
+      // Two concurrent requests both passed the findFirst check and raced to insert.
+      // The second insert hits the clerkUserId UNIQUE constraint — re-fetch the row
+      // that the first request already created.
+      org = await db.query.organizations.findFirst({
+        where: eq(organizations.clerkUserId, clerkUserId),
+      })
+      if (!org) throw new Error('Failed to create or retrieve organization')
+    }
   }
 
   return org
