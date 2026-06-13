@@ -8,7 +8,7 @@ const testimonials = [
     name: 'Marcus Chen',
     role: 'Founder, Growth Academy',
     avatar: 'MC',
-    avatarGradient: 'from-violet-500 to-indigo-600',
+    avatarBg: 'bg-violet-100 text-violet-700',
     content: "I was manually adding and removing 200+ members every month. OrbitSynk completely eliminated that. The moment someone pays, they're in. The moment they cancel, they're out. It just works.",
     metric: '200+ hours saved per year',
     stars: 5,
@@ -17,7 +17,7 @@ const testimonials = [
     name: 'Sarah Okafor',
     role: 'Community Lead, Creator Collective',
     avatar: 'SO',
-    avatarGradient: 'from-pink-500 to-rose-600',
+    avatarBg: 'bg-rose-100 text-rose-700',
     content: "We had a serious problem with failed payment ghost members. OrbitSynk's recovery flow caught 94% of churned subscribers. It basically paid for itself in the first week.",
     metric: '$12,400 recovered in 30 days',
     stars: 5,
@@ -26,7 +26,7 @@ const testimonials = [
     name: 'James Whitfield',
     role: 'CEO, Mastermind Pro',
     avatar: 'JW',
-    avatarGradient: 'from-amber-500 to-orange-600',
+    avatarBg: 'bg-orange-100 text-orange-700',
     content: "I tried building this with Zapier. It broke constantly. OrbitSynk is built exactly for this use case. The sync is near-instant and I've had zero issues in 3 months.",
     metric: '0 sync errors in 90 days',
     stars: 5,
@@ -35,7 +35,7 @@ const testimonials = [
     name: 'Priya Sharma',
     role: 'Founder, Wellness Circle',
     avatar: 'PS',
-    avatarGradient: 'from-emerald-500 to-teal-600',
+    avatarBg: 'bg-emerald-100 text-emerald-700',
     content: "Setting up OrbitSynk took me 8 minutes. Eight. Minutes. Now my 1,200 member community runs itself from a billing perspective. That's genuinely life-changing.",
     metric: '1,200 members synced automatically',
     stars: 5,
@@ -44,7 +44,7 @@ const testimonials = [
     name: 'David Laurent',
     role: 'Course Creator, Trading Insiders',
     avatar: 'DL',
-    avatarGradient: 'from-blue-500 to-cyan-600',
+    avatarBg: 'bg-blue-100 text-blue-700',
     content: "The event log alone is worth it. I can see exactly what happened for any member — when they subscribed, when a payment failed, when we recovered. Full transparency.",
     metric: 'Full audit trail for 850+ members',
     stars: 5,
@@ -53,7 +53,7 @@ const testimonials = [
     name: 'Aisha Johnson',
     role: 'Coach, Elevated Entrepreneurs',
     avatar: 'AJ',
-    avatarGradient: 'from-purple-500 to-violet-600',
+    avatarBg: 'bg-indigo-100 text-indigo-700',
     content: "My previous setup had a 48-hour delay between someone paying and getting community access. People were emailing me constantly. OrbitSynk made it instant. No more support tickets.",
     metric: 'Access now granted in < 2 seconds',
     stars: 5,
@@ -69,10 +69,7 @@ const metrics = [
 
 export default function SocialProofSection() {
   return (
-    <section className="relative py-28 overflow-hidden" id="social-proof">
-      <div className="absolute inset-0 grid-bg opacity-30" />
-      <div className="orb w-[500px] h-[500px] bg-violet-600/8 top-1/2 left-1/4 pointer-events-none" />
-
+    <section className="relative py-20 lg:py-28 overflow-hidden bg-white" id="social-proof">
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -82,15 +79,15 @@ export default function SocialProofSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="section-tag mb-5 mx-auto w-fit">
+          <div className="flex items-center gap-2 mb-5 mx-auto w-fit text-[11px] font-semibold tracking-wider uppercase text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
             <Star className="w-3 h-3" />
             Social Proof
           </div>
-          <h2 className="section-headline text-white mb-5">
+          <h2 className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Creators trust OrbitSynk<br />
-            <span className="gradient-text">to run their memberships.</span>
+            to run their memberships.
           </h2>
-          <p className="text-white/45 text-lg max-w-xl mx-auto font-[380]">
+          <p className="text-gray-600 text-lg max-w-xl mx-auto">
             Join hundreds of community creators who've eliminated manual membership management.
           </p>
         </motion.div>
@@ -106,10 +103,10 @@ export default function SocialProofSection() {
           {metrics.map((metric, i) => (
             <div
               key={i}
-              className="text-center p-6 glass-card rounded-2xl"
+              className="text-center p-6 bg-[#F9F9F9] border border-gray-100 rounded-2xl"
             >
-              <div className="stat-number gradient-text-blue mb-1">{metric.value}</div>
-              <div className="text-sm text-white/40">{metric.label}</div>
+              <div className="text-3xl lg:text-4xl font-bold text-gray-900 mb-1">{metric.value}</div>
+              <div className="text-sm text-gray-500">{metric.label}</div>
             </div>
           ))}
         </motion.div>
@@ -123,7 +120,7 @@ export default function SocialProofSection() {
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true, margin: '-40px' }}
               transition={{ duration: 0.5, delay: i * 0.08 }}
-              className="feature-card p-6 group cursor-default"
+              className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm"
             >
               {/* Stars */}
               <div className="flex gap-1 mb-4">
@@ -133,26 +130,26 @@ export default function SocialProofSection() {
               </div>
 
               {/* Quote icon */}
-              <Quote className="w-6 h-6 text-white/10 mb-3" />
+              <Quote className="w-6 h-6 text-gray-300 mb-3" />
 
               {/* Content */}
-              <p className="text-[13.5px] text-white/60 leading-relaxed mb-5 font-[380]">
+              <p className="text-[13.5px] text-gray-700 leading-relaxed mb-5">
                 "{testimonial.content}"
               </p>
 
               {/* Metric */}
-              <div className="bg-indigo-500/10 border border-indigo-500/15 rounded-lg px-3 py-2 mb-5">
-                <span className="text-[12px] font-semibold text-indigo-300">✦ {testimonial.metric}</span>
+              <div className="bg-green-50 border border-green-100 rounded-lg px-3 py-2 mb-5">
+                <span className="text-[12px] font-semibold text-green-700">✦ {testimonial.metric}</span>
               </div>
 
               {/* Author */}
               <div className="flex items-center gap-3">
-                <div className={`w-9 h-9 rounded-full bg-gradient-to-br ${testimonial.avatarGradient} flex items-center justify-center text-[12px] font-bold text-white flex-shrink-0`}>
+                <div className={`w-9 h-9 rounded-full ${testimonial.avatarBg} flex items-center justify-center text-[12px] font-bold flex-shrink-0`}>
                   {testimonial.avatar}
                 </div>
                 <div>
-                  <div className="text-[13px] font-semibold text-white">{testimonial.name}</div>
-                  <div className="text-[11px] text-white/40">{testimonial.role}</div>
+                  <div className="text-[13px] font-semibold text-gray-900">{testimonial.name}</div>
+                  <div className="text-[11px] text-gray-500">{testimonial.role}</div>
                 </div>
               </div>
             </motion.div>

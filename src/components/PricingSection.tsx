@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { motion } from 'framer-motion'
-import { CheckCircle2, Zap, X } from 'lucide-react'
+import { CheckCircle2, Zap, X, ArrowRight } from 'lucide-react'
 
 type PlanId = 'starter' | 'growth' | 'pro'
 
@@ -88,9 +88,7 @@ export default function PricingSection() {
   const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly')
 
   return (
-    <section className="relative py-28 overflow-hidden" id="pricing">
-      <div className="absolute inset-0 grid-bg opacity-40" />
-
+    <section className="relative py-20 lg:py-28 overflow-hidden bg-[#F5F5F5]" id="pricing">
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -100,33 +98,33 @@ export default function PricingSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-12"
         >
-          <div className="section-tag mb-5 mx-auto w-fit">
+          <div className="flex items-center gap-2 mb-5 mx-auto w-fit text-[11px] font-semibold tracking-wider uppercase text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-full">
             <Zap className="w-3 h-3" />
             Pricing
           </div>
-          <h2 className="section-headline text-white mb-5">
+          <h2 className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Simple, transparent pricing.<br />
-            <span className="gradient-text">Pay as you grow.</span>
+            Pay as you grow.
           </h2>
-          <p className="text-white/45 text-lg max-w-xl mx-auto mb-8 font-[380]">
+          <p className="text-gray-600 text-lg max-w-xl mx-auto mb-8">
             No per-member fees. No hidden costs. Cancel anytime.
           </p>
 
           {/* Billing toggle */}
-          <div className="inline-flex items-center gap-2 bg-white/[0.04] border border-white/8 rounded-xl p-1">
+          <div className="inline-flex items-center gap-2 bg-gray-200/50 border border-gray-200 rounded-xl p-1">
             {(['monthly', 'yearly'] as const).map((period) => (
               <button
                 key={period}
                 onClick={() => setBilling(period)}
                 className={`px-5 py-2 rounded-lg text-[13px] font-medium transition-all duration-200 ${
                   billing === period
-                    ? 'bg-indigo-600 text-white shadow-lg shadow-indigo-500/20'
-                    : 'text-white/50 hover:text-white'
+                    ? 'bg-white text-gray-900 shadow-sm border border-gray-200/50'
+                    : 'text-gray-500 hover:text-gray-900'
                 }`}
               >
                 {period === 'monthly' ? 'Monthly' : 'Yearly'}
                 {period === 'yearly' && (
-                  <span className="ml-2 text-[10px] bg-emerald-500/20 text-emerald-400 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                  <span className="ml-2 text-[10px] bg-green-100 text-green-700 px-2 py-0.5 rounded-full border border-green-200">
                     Save 20%
                   </span>
                 )}
@@ -148,16 +146,16 @@ export default function PricingSection() {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.1 }}
-                className={`relative rounded-2xl p-7 flex flex-col ${
+                className={`relative rounded-2xl p-7 flex flex-col bg-white border ${
                   plan.popular
-                    ? 'pricing-card-popular'
-                    : 'pricing-card'
+                    ? 'border-orange-500 shadow-lg'
+                    : 'border-gray-200 shadow-sm'
                 }`}
               >
                 {/* Popular badge */}
                 {plan.popular && (
                   <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                    <span className="inline-flex items-center gap-1.5 bg-indigo-600 text-white text-[11px] font-semibold px-4 py-1.5 rounded-full shadow-lg shadow-indigo-500/30">
+                    <span className="inline-flex items-center gap-1.5 bg-[#F26522] text-white text-[11px] font-semibold px-4 py-1.5 rounded-full shadow-sm">
                       <span className="w-1.5 h-1.5 rounded-full bg-white animate-pulse" />
                       {plan.highlight}
                     </span>
@@ -166,18 +164,18 @@ export default function PricingSection() {
 
                 {/* Plan header */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-bold text-white mb-1">{plan.name}</h3>
-                  <p className="text-[13px] text-white/45 leading-relaxed">{plan.description}</p>
+                  <h3 className="text-lg font-bold text-gray-900 mb-1">{plan.name}</h3>
+                  <p className="text-[13px] text-gray-500 leading-relaxed">{plan.description}</p>
                 </div>
 
                 {/* Price */}
-                <div className="mb-6 pb-6 border-b border-white/6">
+                <div className="mb-6 pb-6 border-b border-gray-100">
                   <div className="flex items-end gap-2">
-                    <span className="text-4xl font-extrabold text-white tracking-tight">${price}</span>
-                    <span className="text-[13px] text-white/35 mb-1.5">/mo</span>
+                    <span className="text-4xl font-extrabold text-gray-900 tracking-tight">${price}</span>
+                    <span className="text-[13px] text-gray-500 mb-1.5">/mo</span>
                   </div>
                   {billing === 'yearly' && (
-                    <p className="text-[12px] text-white/30 mt-1">Billed ${price * 12}/year</p>
+                    <p className="text-[12px] text-gray-400 mt-1">Billed ${price * 12}/year</p>
                   )}
                 </div>
 
@@ -185,27 +183,35 @@ export default function PricingSection() {
                 <a
                   href="#waitlist"
                   id={`pricing-${plan.id}-cta`}
-                  className={`block text-center py-3 rounded-xl text-[14px] font-semibold transition-all duration-300 mb-7 ${
+                  className={`group relative inline-flex items-center justify-center gap-2 w-full py-2.5 rounded-full text-[14px] font-medium transition-colors duration-300 mb-7 ${
                     plan.popular
-                      ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40'
-                      : 'bg-white/5 hover:bg-white/10 text-white border border-white/10 hover:border-white/20'
+                      ? 'bg-[#F26522] text-white hover:bg-[#e05a1a]'
+                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
                   }`}
                 >
-                  {plan.cta}
+                  <div className="text-roll-container">
+                    <span>{plan.cta}</span>
+                    <span>{plan.cta}</span>
+                  </div>
+                  <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-rotate-45 ${
+                    plan.popular ? 'bg-white text-[#F26522]' : 'bg-white border border-gray-200 text-gray-900'
+                  }`}>
+                    <ArrowRight size={14} />
+                  </div>
                 </a>
 
                 {/* Features */}
                 <div className="space-y-3 flex-1">
                   {plan.features.map((feature) => (
                     <div key={feature} className="flex items-start gap-3">
-                      <CheckCircle2 className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
-                      <span className="text-[13px] text-white/65">{feature}</span>
+                      <CheckCircle2 className="w-4 h-4 text-emerald-500 flex-shrink-0 mt-0.5" />
+                      <span className="text-[13px] text-gray-700">{feature}</span>
                     </div>
                   ))}
                   {notInc.map((feature) => (
-                    <div key={feature} className="flex items-start gap-3 opacity-40">
-                      <X className="w-4 h-4 text-white/30 flex-shrink-0 mt-0.5" />
-                      <span className="text-[13px] text-white/30 line-through">{feature}</span>
+                    <div key={feature} className="flex items-start gap-3 opacity-50">
+                      <X className="w-4 h-4 text-gray-400 flex-shrink-0 mt-0.5" />
+                      <span className="text-[13px] text-gray-400 line-through">{feature}</span>
                     </div>
                   ))}
                 </div>
@@ -220,7 +226,7 @@ export default function PricingSection() {
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.6, delay: 0.3 }}
-          className="text-center text-sm text-white/25 mt-10"
+          className="text-center text-sm text-gray-400 mt-10"
         >
           All plans include a 14-day free trial. No credit card required to start.
         </motion.p>

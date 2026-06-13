@@ -17,10 +17,10 @@ export default function IntegrationTicker() {
   const doubled = [...integrations, ...integrations]
 
   return (
-    <div className="relative py-12 overflow-hidden border-y border-white/[0.04]">
-      <div className="absolute inset-0 bg-gradient-to-r from-[#080808] via-transparent to-[#080808] z-10 pointer-events-none" />
+    <div className="relative py-12 overflow-hidden border-y border-gray-200 bg-[#EFEFEF]">
+      <div className="absolute inset-0 bg-gradient-to-r from-[#EFEFEF] via-transparent to-[#EFEFEF] z-10 pointer-events-none" />
       
-      <p className="text-[10px] font-semibold text-white/20 uppercase tracking-[0.2em] text-center mb-6">
+      <p className="text-[10px] font-semibold text-gray-500 uppercase tracking-[0.2em] text-center mb-6">
         Integrating with your existing tools
       </p>
 
@@ -40,10 +40,10 @@ export default function IntegrationTicker() {
           {doubled.map((item, i) => (
             <div
               key={i}
-              className="flex items-center gap-3 bg-white/[0.03] border border-white/[0.06] rounded-xl px-5 py-3 flex-shrink-0 hover:bg-white/[0.05] transition-colors duration-200"
+              className="flex items-center gap-3 bg-white border border-gray-200 shadow-sm rounded-xl px-5 py-3 flex-shrink-0 transition-colors duration-200"
             >
               <span className="text-xl">{item.emoji}</span>
-              <span className="text-[13px] font-medium text-white/50 whitespace-nowrap">{item.name}</span>
+              <span className="text-[13px] font-medium text-gray-600 whitespace-nowrap">{item.name}</span>
             </div>
           ))}
         </motion.div>

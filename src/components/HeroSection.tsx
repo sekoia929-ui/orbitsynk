@@ -1,216 +1,105 @@
 'use client'
 
-import { motion } from 'framer-motion'
-import { ArrowRight, Play, CheckCircle2, XCircle, AlertCircle, RefreshCw, Users, TrendingUp } from 'lucide-react'
+import dynamic from 'next/dynamic'
+import { ArrowRight } from 'lucide-react'
 
-const events = [
-  { type: 'success', label: 'Payment Succeeded', user: 'alex@example.com', plan: 'Growth', time: '2s ago', icon: CheckCircle2, color: 'text-emerald-400', bg: 'bg-emerald-400/10', border: 'border-emerald-400/20' },
-  { type: 'access', label: 'Access Granted', user: 'alex@example.com', community: 'Pro Circle', time: '2s ago', icon: Users, color: 'text-indigo-400', bg: 'bg-indigo-400/10', border: 'border-indigo-400/20' },
-  { type: 'failed', label: 'Payment Failed', user: 'sara@example.com', plan: 'Starter', time: '1m ago', icon: XCircle, color: 'text-red-400', bg: 'bg-red-400/10', border: 'border-red-400/20' },
-  { type: 'recovery', label: 'Recovery Initiated', user: 'sara@example.com', action: 'Retry in 24h', time: '1m ago', icon: RefreshCw, color: 'text-amber-400', bg: 'bg-amber-400/10', border: 'border-amber-400/20' },
-  { type: 'sync', label: 'Membership Synced', user: 'john@example.com', plan: 'Pro', time: '3m ago', icon: TrendingUp, color: 'text-cyan-400', bg: 'bg-cyan-400/10', border: 'border-cyan-400/20' },
-]
+// Dynamically import shaders (WebGL — no SSR)
+const ShaderCanvas = dynamic(() => import('./ShaderCanvas'), { ssr: false })
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
-  }
-}
-
-const itemVariants = {
-  hidden: { opacity: 0, x: 30 },
-  visible: { opacity: 1, x: 0, transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] } }
+// Starburst SVG partner badge icon (per spec)
+function StarburstIcon({ className }: { className?: string }) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" className={className} fill="currentColor">
+      <path d="m19.6 66.5 19.7-11 .3-1-.3-.5h-1l-3.3-.2-11.2-.3L14 53l-9.5-.5-2.4-.5L0 49l.2-1.5 2-1.3 2.9.2 6.3.5 9.5.6 6.9.4L38 49.1h1.6l.2-.7-.5-.4-.4-.4L29 41l-10.6-7-5.6-4.1-3-2-1.5-2-.6-4.2 2.7-3 3.7.3.9.2 3.7 2.9 8 6.1L37 36l1.5 1.2.6-.4.1-.3-.7-1.1L33 25l-6-10.4-2.7-4.3-.7-2.6c-.3-1-.4-2-.4-3l3-4.2L28 0l4.2.6L33.8 2l2.6 6 4.1 9.3L47 29.9l2 3.8 1 3.4.3 1h.7v-.5l.5-7.2 1-8.7 1-11.2.3-3.2 1.6-3.8 3-2L61 2.6l2 2.9-.3 1.8-1.1 7.7L59 27.1l-1.5 8.2h.9l1-1.1 4.1-5.4 6.9-8.6 3-3.5L77 13l2.3-1.8h4.3l3.1 4.7-1.4 4.9-4.4 5.6-3.7 4.7-5.3 7.1-3.2 5.7.3.4h.7l12-2.6 6.4-1.1 7.6-1.3 3.5 1.6.4 1.6-1.4 3.4-8.2 2-9.6 2-14.3 3.3-.2.1.2.3 6.4.6 2.8.2h6.8l12.6 1 3.3 2 1.9 2.7-.3 2-5.1 2.6-6.8-1.6-16-3.8-5.4-1.3h-.8v.4l4.6 4.5 8.3 7.5L89 80.1l.5 2.4-1.3 2-1.4-.2-9.2-7-3.6-3-8-6.8h-.5v.7l1.8 2.7 9.8 14.7.5 4.5-.7 1.4-2.6 1-2.7-.6-5.8-8-6-9-4.7-8.2-.5.4-2.9 30.2-1.3 1.5-3 1.2-2.5-2-1.4-3 1.4-6.2 1.6-8 1.3-6.4 1.2-7.9.7-2.6v-.2H49L43 72l-9 12.3-7.2 7.6-1.7.7-3-1.5.3-2.8L24 86l10-12.8 6-7.9 4-4.6-.1-.5h-.3L17.2 77.4l-4.7.6-2-2 .2-3 1-1 8-5.5Z" />
+    </svg>
+  )
 }
 
 export default function HeroSection() {
+  const handleScroll = (e: React.MouseEvent<HTMLAnchorElement>, href: string) => {
+    e.preventDefault()
+    const targetId = href.replace(/.*\#/, '')
+    const elem = document.getElementById(targetId)
+    elem?.scrollIntoView({
+      behavior: 'smooth',
+    })
+  }
+
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center pt-24 pb-16 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 grid-bg opacity-100" />
-      
-      {/* Glowing orbs */}
-      <div className="orb w-[600px] h-[600px] bg-indigo-600/15 top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none" />
-      <div className="orb w-[400px] h-[400px] bg-violet-600/10 top-1/3 right-1/4 pointer-events-none" style={{ animationDelay: '3s' }} />
-      <div className="orb w-[300px] h-[300px] bg-blue-600/10 bottom-1/3 left-1/4 pointer-events-none" style={{ animationDelay: '5s' }} />
-      
-      {/* Gradient overlay at bottom */}
-      <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-[#080808] to-transparent pointer-events-none" />
+    <section
+      className="relative min-h-screen flex flex-col overflow-hidden"
+      style={{ background: '#EFEFEF' }}
+    >
+      {/* Shader overlay — absolute, inset-0, z-10, pointer-events-none */}
+      <div className="absolute inset-0 z-10 pointer-events-none">
+        <ShaderCanvas />
+      </div>
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8 w-full">
-        {/* Announcement badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.1 }}
-          className="flex justify-center mb-8"
-        >
-          <a href="#waitlist" className="group inline-flex items-center gap-2.5 bg-indigo-500/10 hover:bg-indigo-500/15 border border-indigo-500/20 hover:border-indigo-500/30 rounded-full px-5 py-2.5 transition-all duration-300">
-            <span className="w-1.5 h-1.5 rounded-full bg-indigo-400 relative">
-              <span className="absolute inset-0 rounded-full bg-indigo-400 ping-slow" />
-            </span>
-            <span className="text-[13px] font-medium text-indigo-300">Now accepting early access applications</span>
-            <ArrowRight className="w-3.5 h-3.5 text-indigo-400 group-hover:translate-x-0.5 transition-transform" />
-          </a>
-        </motion.div>
+      {/* Spacer pushes content to bottom */}
+      <div className="flex-1" />
 
-        {/* Main headline */}
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.2 }}
-          className="text-center max-w-4xl mx-auto mb-6"
-        >
-          <h1 className="hero-headline mb-0">
-            <span className="text-white">Automate membership access</span>
-            <br />
-            <span className="gradient-text">from subscription payments.</span>
-          </h1>
-        </motion.div>
+      {/* Hero Content — z-20, pinned to bottom */}
+      <div className="relative z-20 max-w-[1440px] mx-auto w-full px-5 sm:px-8 lg:px-12 pb-14 sm:pb-16 lg:pb-20">
+        {/* Small label */}
+        <p className="text-[13px] sm:text-[14px] text-gray-900 tracking-wide mb-5 sm:mb-8">
+          OrbitSynk
+        </p>
 
-        {/* Subheadline */}
-        <motion.p
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.35 }}
-          className="text-center text-white/50 text-lg lg:text-xl max-w-2xl mx-auto mb-10 leading-relaxed font-[380]"
+        {/* Headline */}
+        <h1
+          className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-8 sm:mb-12"
+          style={{
+            fontSize: 'clamp(1.75rem, 7vw, 4.2rem)',
+          }}
         >
-          OrbitSynk keeps your billing and community perfectly in sync — automatically.
-          Grant access when payments succeed, remove it when they fail.
-        </motion.p>
+          We automate membership access
+          <br className="hidden sm:block" />
+          <span className="sm:hidden"> </span>
+          for communities ready to
+          <br className="hidden sm:block" />
+          <span className="sm:hidden"> </span>
+          scale without the manual work.
+        </h1>
 
-        {/* CTA buttons */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.45 }}
-          className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16"
-        >
+        {/* CTA Row */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-5">
+          {/* Orange primary button */}
           <a
             href="#waitlist"
+            onClick={(e) => handleScroll(e, '#waitlist')}
             id="hero-cta-primary"
-            className="relative inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-[15px] font-semibold text-white overflow-hidden group shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 transition-shadow duration-300"
+            className="group inline-flex items-center gap-2 text-white text-[13px] sm:text-[14px] font-medium rounded-full pl-5 sm:pl-6 pr-2 py-2 transition-colors duration-300"
+            style={{ background: '#F26522' }}
+            onMouseEnter={e => (e.currentTarget.style.background = '#e05a1a')}
+            onMouseLeave={e => (e.currentTarget.style.background = '#F26522')}
           >
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-600 to-violet-600" />
-            <div className="absolute inset-0 bg-gradient-to-r from-indigo-500 to-violet-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-            <span className="relative z-10">Get Early Access</span>
-            <ArrowRight className="relative z-10 w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
+            <div className="text-roll-container">
+              <span>Get Early Access</span>
+              <span>Get Early Access</span>
+            </div>
+            <div className="w-7 h-7 sm:w-8 sm:h-8 bg-white rounded-full flex items-center justify-center flex-shrink-0 transition-transform duration-500 ease-[cubic-bezier(0.25,0.1,0.25,1)] group-hover:-rotate-45">
+              <ArrowRight size={13} style={{ color: '#F26522' }} />
+            </div>
           </a>
-          <a
-            href="#demo"
-            id="hero-cta-demo"
-            className="inline-flex items-center gap-2.5 px-7 py-3.5 rounded-xl text-[15px] font-medium text-white/70 hover:text-white border border-white/10 hover:border-white/20 bg-white/[0.03] hover:bg-white/[0.06] transition-all duration-300"
+
+          {/* Certified Partner badge */}
+          <div
+            className="inline-flex items-center gap-2.5 bg-white rounded-[4px] px-3 py-2 transition-shadow duration-300"
+            style={{
+              boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+            }}
+            onMouseEnter={e => ((e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,0.12)')}
+            onMouseLeave={e => ((e.currentTarget as HTMLElement).style.boxShadow = '0 2px 8px rgba(0,0,0,0.08)')}
           >
-            <Play className="w-4 h-4" />
-            Book a Demo
-          </a>
-        </motion.div>
-
-        {/* Stats row */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.55 }}
-          className="flex flex-wrap items-center justify-center gap-8 mb-16 text-sm"
-        >
-          {[
-            { value: '< 2s', label: 'Sync time' },
-            { value: '99.9%', label: 'Uptime SLA' },
-            { value: '0', label: 'Code required' },
-            { value: '5 min', label: 'Setup time' },
-          ].map((stat) => (
-            <div key={stat.label} className="flex items-center gap-2">
-              <span className="font-semibold text-white">{stat.value}</span>
-              <span className="text-white/35">{stat.label}</span>
-            </div>
-          ))}
-        </motion.div>
-
-        {/* Dashboard Mockup */}
-        <motion.div
-          initial={{ opacity: 0, y: 60, scale: 0.95 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.9, delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
-          className="relative max-w-4xl mx-auto"
-        >
-          {/* Outer glow */}
-          <div className="absolute -inset-1 bg-gradient-to-r from-indigo-500/20 via-violet-500/20 to-cyan-500/20 rounded-2xl blur-xl" />
-          
-          {/* Dashboard container */}
-          <div className="relative bg-[#0d0d0d] border border-white/8 rounded-2xl overflow-hidden shadow-2xl">
-            {/* Dashboard header */}
-            <div className="flex items-center gap-3 px-5 py-4 border-b border-white/5 bg-[#0a0a0a]">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/60" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/60" />
-                <div className="w-3 h-3 rounded-full bg-green-500/60" />
-              </div>
-              <div className="flex-1 mx-4">
-                <div className="flex items-center gap-2 bg-white/5 rounded-lg px-3 py-1.5 max-w-[280px] mx-auto">
-                  <div className="w-2 h-2 rounded-full bg-emerald-400" />
-                  <span className="text-xs text-white/40 font-mono">app.orbitsynk.com/dashboard</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Dashboard body */}
-            <div className="p-6">
-              {/* Stats row */}
-              <div className="grid grid-cols-4 gap-4 mb-6">
-                {[
-                  { label: 'Active Members', value: '2,847', change: '+12%', up: true },
-                  { label: 'Revenue Synced', value: '$48.2K', change: '+8.3%', up: true },
-                  { label: 'Failed Recovered', value: '94%', change: '+2.1%', up: true },
-                  { label: 'Access Events', value: '18.4K', change: '+24%', up: true },
-                ].map((stat) => (
-                  <div key={stat.label} className="bg-white/[0.03] border border-white/5 rounded-xl p-4">
-                    <div className="text-[11px] text-white/40 mb-1.5 font-medium">{stat.label}</div>
-                    <div className="text-xl font-bold text-white mb-1">{stat.value}</div>
-                    <div className="text-[11px] text-emerald-400 font-medium">{stat.change} this month</div>
-                  </div>
-                ))}
-              </div>
-
-              {/* Events feed */}
-              <div className="bg-white/[0.02] border border-white/5 rounded-xl p-4">
-                <div className="flex items-center justify-between mb-4">
-                  <span className="text-sm font-semibold text-white/80">Live Event Stream</span>
-                  <span className="flex items-center gap-1.5 text-[11px] text-emerald-400">
-                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 relative">
-                      <span className="absolute inset-0 rounded-full bg-emerald-400 animate-ping opacity-75" />
-                    </span>
-                    Live
-                  </span>
-                </div>
-                <motion.div
-                  variants={containerVariants}
-                  initial="hidden"
-                  animate="visible"
-                  className="space-y-2.5"
-                >
-                  {events.map((event, i) => {
-                    const Icon = event.icon
-                    return (
-                      <motion.div
-                        key={i}
-                        variants={itemVariants}
-                        className={`flex items-center gap-3 p-3 rounded-lg ${event.bg} border ${event.border}`}
-                      >
-                        <Icon className={`w-4 h-4 ${event.color} flex-shrink-0`} />
-                        <div className="flex-1 min-w-0">
-                          <span className={`text-[12px] font-semibold ${event.color}`}>{event.label}</span>
-                          <span className="text-[12px] text-white/40 ml-2">{event.user}</span>
-                        </div>
-                        <span className="text-[11px] text-white/25 flex-shrink-0 font-mono">{event.time}</span>
-                      </motion.div>
-                    )
-                  })}
-                </motion.div>
-              </div>
-            </div>
+            <StarburstIcon className="w-5 h-5 sm:w-6 sm:h-6 text-[#E8704E]" />
+            <span className="text-[13px] sm:text-[14px] font-medium text-gray-900">
+              Trusted Platform
+            </span>
+            <span className="text-[10px] sm:text-[11px] bg-gray-900 text-white px-1.5 sm:px-2 py-0.5 rounded font-medium">
+              Beta
+            </span>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   )

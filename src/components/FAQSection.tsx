@@ -57,13 +57,13 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: {
         onClick={onToggle}
         className="w-full flex items-start justify-between gap-4 py-5 text-left group"
       >
-        <span className={`text-[15px] font-medium leading-snug transition-colors duration-200 ${isOpen ? 'text-white' : 'text-white/70 group-hover:text-white'}`}>
+        <span className={`text-[15px] font-medium leading-snug transition-colors duration-200 ${isOpen ? 'text-[#F26522]' : 'text-gray-700 group-hover:text-gray-900'}`}>
           {question}
         </span>
         <span className={`w-6 h-6 rounded-full border flex items-center justify-center flex-shrink-0 mt-0.5 transition-all duration-300 ${
           isOpen 
-            ? 'border-indigo-500/40 bg-indigo-500/10 text-indigo-400 rotate-180' 
-            : 'border-white/10 text-white/30 group-hover:border-white/20 group-hover:text-white/50'
+            ? 'border-orange-200 bg-orange-50 text-[#F26522] rotate-180' 
+            : 'border-gray-200 text-gray-400 group-hover:border-gray-300 group-hover:text-gray-600'
         }`}>
           <ChevronDown className="w-3.5 h-3.5" />
         </span>
@@ -78,14 +78,14 @@ function FAQItem({ question, answer, isOpen, onToggle, index }: {
             transition={{ duration: 0.3, ease: [0.16, 1, 0.3, 1] }}
             className="overflow-hidden"
           >
-            <p className="pb-5 text-[13.5px] text-white/45 leading-relaxed pr-10">
+            <p className="pb-5 text-[13.5px] text-gray-600 leading-relaxed pr-10">
               {answer}
             </p>
           </motion.div>
         )}
       </AnimatePresence>
 
-      <div className="w-full h-px bg-white/5" />
+      <div className="w-full h-px bg-gray-100" />
     </motion.div>
   )
 }
@@ -94,9 +94,7 @@ export default function FAQSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(0)
 
   return (
-    <section className="relative py-28 overflow-hidden" id="faq">
-      <div className="absolute inset-0 grid-bg opacity-30" />
-
+    <section className="relative py-20 lg:py-28 overflow-hidden bg-white" id="faq">
       <div className="relative z-10 max-w-3xl mx-auto px-6 lg:px-8">
         {/* Header */}
         <motion.div
@@ -106,21 +104,21 @@ export default function FAQSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-14"
         >
-          <div className="section-tag mb-5 mx-auto w-fit">
+          <div className="flex items-center gap-2 mb-5 mx-auto w-fit text-[11px] font-semibold tracking-wider uppercase text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
             <HelpCircle className="w-3 h-3" />
             FAQ
           </div>
-          <h2 className="section-headline text-white mb-4">
+          <h2 className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-4" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Questions answered.
           </h2>
-          <p className="text-white/45 text-base font-[380]">
+          <p className="text-gray-600 text-base">
             Everything you need to know before getting started.
           </p>
         </motion.div>
 
         {/* FAQ Items */}
-        <div className="glass-card rounded-2xl px-7 py-2">
-          <div className="h-px w-full bg-white/5 mt-2" />
+        <div className="bg-white border border-gray-200 shadow-sm rounded-2xl px-7 py-2">
+          <div className="h-px w-full bg-transparent mt-2" />
           {faqs.map((faq, i) => (
             <FAQItem
               key={i}
@@ -138,10 +136,10 @@ export default function FAQSection() {
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
-          className="text-center text-sm text-white/30 mt-8"
+          className="text-center text-sm text-gray-500 mt-8"
         >
           Still have questions?{' '}
-          <a href="mailto:hello@orbitsynk.com" className="text-indigo-400 hover:text-indigo-300 transition-colors">
+          <a href="mailto:hello@orbitsynk.com" className="text-[#F26522] hover:underline transition-colors">
             Email us
           </a>
           {' '}and we'll get back to you quickly.

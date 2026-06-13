@@ -48,9 +48,7 @@ const cardVariants = {
 
 export default function ProblemSection() {
   return (
-    <section className="relative py-28 overflow-hidden" id="problem">
-      <div className="absolute inset-0 grid-bg opacity-40" />
-
+    <section className="relative py-20 lg:py-28 overflow-hidden bg-white" id="problem">
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -60,15 +58,15 @@ export default function ProblemSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <div className="section-tag mb-5 mx-auto w-fit">
+          <div className="flex items-center gap-2 mb-5 mx-auto w-fit text-[11px] font-semibold tracking-wider uppercase text-gray-500 bg-gray-100 px-3 py-1 rounded-full">
             <AlertTriangle className="w-3 h-3" />
             The Problem
           </div>
-          <h2 className="section-headline text-white mb-5">
+          <h2 className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             Managing memberships manually<br />
-            <span className="gradient-text">is draining your growth.</span>
+            is draining your growth.
           </h2>
-          <p className="text-white/45 text-lg max-w-xl mx-auto leading-relaxed font-[380]">
+          <p className="text-gray-600 text-lg max-w-xl mx-auto leading-relaxed">
             Every hour spent on member management is an hour not spent building your community.
           </p>
         </motion.div>
@@ -87,15 +85,15 @@ export default function ProblemSection() {
               <motion.div
                 key={i}
                 variants={cardVariants}
-                className="feature-card p-6 group cursor-default"
+                className="bg-[#F9F9F9] border border-gray-100 rounded-2xl p-6 group"
               >
                 <div className="flex items-start gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/15 flex items-center justify-center flex-shrink-0 group-hover:bg-red-500/15 transition-colors duration-300">
-                    <Icon className="w-5 h-5 text-red-400" />
+                  <div className="w-10 h-10 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center flex-shrink-0 transition-colors duration-300">
+                    <Icon className="w-5 h-5 text-orange-500" />
                   </div>
                   <div>
-                    <h3 className="text-[15px] font-semibold text-white mb-2 leading-tight">{problem.title}</h3>
-                    <p className="text-[13.5px] text-white/40 leading-relaxed">{problem.description}</p>
+                    <h3 className="text-[15px] font-semibold text-gray-900 mb-2 leading-tight">{problem.title}</h3>
+                    <p className="text-[13.5px] text-gray-600 leading-relaxed">{problem.description}</p>
                   </div>
                 </div>
               </motion.div>
@@ -111,7 +109,7 @@ export default function ProblemSection() {
           transition={{ duration: 0.6, delay: 0.3 }}
           className="text-center mt-16"
         >
-          <p className="text-white/30 text-sm">
+          <p className="text-gray-500 text-sm">
             Sound familiar? You're not alone. Thousands of community creators deal with this every day.
           </p>
         </motion.div>

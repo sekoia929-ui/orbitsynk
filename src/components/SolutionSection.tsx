@@ -18,11 +18,7 @@ export default function SolutionSection() {
   const isInView = useInView(ref, { once: true, margin: '-100px' })
 
   return (
-    <section className="relative py-28 overflow-hidden" id="solution">
-      {/* Gradient overlay */}
-      <div className="absolute inset-0 bg-gradient-to-b from-transparent via-indigo-950/5 to-transparent" />
-      <div className="absolute inset-0 grid-bg opacity-30" />
-
+    <section className="relative py-20 lg:py-28 overflow-hidden bg-[#F5F5F5]" id="solution">
       <div className="relative z-10 max-w-7xl mx-auto px-6 lg:px-8">
         {/* Section header */}
         <motion.div
@@ -32,15 +28,15 @@ export default function SolutionSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-20"
         >
-          <div className="section-tag mb-5 mx-auto w-fit">
+          <div className="flex items-center gap-2 mb-5 mx-auto w-fit text-[11px] font-semibold tracking-wider uppercase text-gray-500 bg-white border border-gray-200 px-3 py-1 rounded-full">
             <Zap className="w-3 h-3" />
             The Solution
           </div>
-          <h2 className="section-headline text-white mb-5">
+          <h2 className="font-medium leading-[1.08] tracking-[-0.03em] text-gray-900 mb-5" style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)' }}>
             One sync layer.<br />
-            <span className="gradient-text">Everything automated.</span>
+            Everything automated.
           </h2>
-          <p className="text-white/45 text-lg max-w-2xl mx-auto leading-relaxed font-[380]">
+          <p className="text-gray-600 text-lg max-w-2xl mx-auto leading-relaxed">
             OrbitSynk sits between your billing provider and community platform, 
             automatically handling every membership lifecycle event.
           </p>
@@ -57,15 +53,15 @@ export default function SolutionSection() {
               transition={{ duration: 0.6, delay: 0.1 }}
               className="relative"
             >
-              <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-6 w-52 text-center group hover:border-white/15 transition-all duration-300 shadow-xl">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 border border-orange-500/20 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 w-52 text-center group shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-orange-100 border border-orange-200 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">💳</span>
                 </div>
-                <div className="text-[13px] font-semibold text-white/90 mb-1">Billing Provider</div>
-                <div className="text-[11px] text-white/35">Lemon Squeezy · Paddle</div>
+                <div className="text-[13px] font-semibold text-gray-900 mb-1">Billing Provider</div>
+                <div className="text-[11px] text-gray-500">Lemon Squeezy · Paddle</div>
                 <div className="mt-3 flex flex-wrap gap-1 justify-center">
                   {['Payment', 'Subscription', 'Refund'].map((tag) => (
-                    <span key={tag} className="text-[9px] px-2 py-0.5 rounded-full bg-orange-500/10 text-orange-300 border border-orange-500/15">{tag}</span>
+                    <span key={tag} className="text-[9px] px-2 py-0.5 rounded-full bg-orange-50 text-orange-600 border border-orange-100">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -79,24 +75,24 @@ export default function SolutionSection() {
               className="flex items-center lg:flex-1 lg:mx-2"
             >
               <div className="hidden lg:flex items-center w-full">
-                <div className="h-px flex-1 bg-gradient-to-r from-orange-500/40 to-indigo-500/40 relative overflow-hidden">
+                <div className="h-px flex-1 bg-gray-300 relative overflow-hidden">
                   <motion.div
-                    className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-orange-400 to-transparent"
                     animate={{ x: ['-100%', '200%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1, ease: 'easeInOut' }}
                   />
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/30 flex-shrink-0 mx-1" />
+                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mx-1" />
               </div>
               <div className="lg:hidden flex flex-col items-center">
-                <div className="w-px h-8 bg-gradient-to-b from-orange-500/40 to-indigo-500/40 relative overflow-hidden">
+                <div className="w-px h-8 bg-gray-300 relative overflow-hidden">
                   <motion.div
-                    className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-white/40 to-transparent"
+                    className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-orange-400 to-transparent"
                     animate={{ y: ['-100%', '200%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 1, ease: 'easeInOut' }}
                   />
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/30 rotate-90" />
+                <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
               </div>
             </motion.div>
 
@@ -107,23 +103,20 @@ export default function SolutionSection() {
               transition={{ duration: 0.7, delay: 0.35 }}
               className="relative"
             >
-              <div className="absolute -inset-2 bg-indigo-500/15 rounded-3xl blur-xl" />
-              <div className="relative bg-gradient-to-br from-indigo-600/20 to-violet-600/20 border border-indigo-500/30 rounded-2xl p-6 w-64 text-center shadow-2xl shadow-indigo-500/10">
-                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center mx-auto mb-4 shadow-lg shadow-indigo-500/30">
+              <div className="relative bg-white border border-gray-200 rounded-2xl p-6 w-64 text-center shadow-lg">
+                <div className="w-14 h-14 rounded-2xl bg-[#F26522] flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <Zap className="w-7 h-7 text-white" />
                 </div>
-                <div className="text-[15px] font-bold text-white mb-1">OrbitSynk</div>
-                <div className="text-[11px] text-indigo-300/70 mb-4">The Sync Layer</div>
+                <div className="text-[15px] font-bold text-gray-900 mb-1">OrbitSynk</div>
+                <div className="text-[11px] text-gray-500 mb-4">The Sync Layer</div>
                 <div className="space-y-1.5">
                   {['Detect events', 'Process rules', 'Sync access', 'Log actions'].map((step) => (
                     <div key={step} className="flex items-center gap-2 text-left">
-                      <CheckCircle2 className="w-3 h-3 text-indigo-400 flex-shrink-0" />
-                      <span className="text-[11px] text-indigo-200/60">{step}</span>
+                      <CheckCircle2 className="w-3 h-3 text-[#F26522] flex-shrink-0" />
+                      <span className="text-[11px] text-gray-600">{step}</span>
                     </div>
                   ))}
                 </div>
-                {/* Pulse ring */}
-                <div className="absolute -inset-px rounded-2xl border border-indigo-400/20 animate-pulse" />
               </div>
             </motion.div>
 
@@ -135,24 +128,24 @@ export default function SolutionSection() {
               className="flex items-center lg:flex-1 lg:mx-2"
             >
               <div className="hidden lg:flex items-center w-full">
-                <div className="h-px flex-1 bg-gradient-to-r from-indigo-500/40 to-cyan-500/40 relative overflow-hidden">
+                <div className="h-px flex-1 bg-gray-300 relative overflow-hidden">
                   <motion.div
-                    className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-white/40 to-transparent"
+                    className="absolute inset-y-0 left-0 w-full bg-gradient-to-r from-transparent via-[#F26522] to-transparent"
                     animate={{ x: ['-100%', '200%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 0.8, ease: 'easeInOut', delay: 0.5 }}
                   />
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/30 flex-shrink-0 mx-1" />
+                <ArrowRight className="w-4 h-4 text-gray-400 flex-shrink-0 mx-1" />
               </div>
               <div className="lg:hidden flex flex-col items-center">
-                <div className="w-px h-8 bg-gradient-to-b from-indigo-500/40 to-cyan-500/40 relative overflow-hidden">
+                <div className="w-px h-8 bg-gray-300 relative overflow-hidden">
                   <motion.div
-                    className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-white/40 to-transparent"
+                    className="absolute inset-x-0 top-0 h-full bg-gradient-to-b from-transparent via-[#F26522] to-transparent"
                     animate={{ y: ['-100%', '200%'] }}
                     transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 0.8, ease: 'easeInOut', delay: 0.5 }}
                   />
                 </div>
-                <ArrowRight className="w-4 h-4 text-white/30 rotate-90" />
+                <ArrowRight className="w-4 h-4 text-gray-400 rotate-90" />
               </div>
             </motion.div>
 
@@ -163,15 +156,15 @@ export default function SolutionSection() {
               transition={{ duration: 0.6, delay: 0.6 }}
               className="relative"
             >
-              <div className="bg-[#0d0d0d] border border-white/8 rounded-2xl p-6 w-52 text-center group hover:border-white/15 transition-all duration-300 shadow-xl">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/20 flex items-center justify-center mx-auto mb-4">
+              <div className="bg-white border border-gray-200 rounded-2xl p-6 w-52 text-center group shadow-sm hover:shadow-md transition-all duration-300">
+                <div className="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100 flex items-center justify-center mx-auto mb-4">
                   <span className="text-2xl">🏘️</span>
                 </div>
-                <div className="text-[13px] font-semibold text-white/90 mb-1">Community Platform</div>
-                <div className="text-[11px] text-white/35">Circle · Skool · Discord</div>
+                <div className="text-[13px] font-semibold text-gray-900 mb-1">Community Platform</div>
+                <div className="text-[11px] text-gray-500">Circle · Skool · Discord</div>
                 <div className="mt-3 flex flex-wrap gap-1 justify-center">
                   {['Access', 'Revoke', 'Sync'].map((tag) => (
-                    <span key={tag} className="text-[9px] px-2 py-0.5 rounded-full bg-cyan-500/10 text-cyan-300 border border-cyan-500/15">{tag}</span>
+                    <span key={tag} className="text-[9px] px-2 py-0.5 rounded-full bg-blue-50 text-blue-600 border border-blue-100">{tag}</span>
                   ))}
                 </div>
               </div>
@@ -186,11 +179,11 @@ export default function SolutionSection() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.6 }}
-            className="glass-card rounded-2xl p-8"
+            className="bg-white border border-gray-200 shadow-sm rounded-2xl p-8"
           >
             <div className="flex items-center gap-2.5 mb-6">
-              <Shield className="w-5 h-5 text-indigo-400" />
-              <span className="text-[15px] font-semibold text-white">What OrbitSynk handles for you</span>
+              <Shield className="w-5 h-5 text-gray-900" />
+              <span className="text-[15px] font-semibold text-gray-900">What OrbitSynk handles for you</span>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
               {features.map((feature, i) => (
@@ -202,10 +195,10 @@ export default function SolutionSection() {
                   transition={{ duration: 0.4, delay: i * 0.07 }}
                   className="flex items-center gap-3"
                 >
-                  <div className="w-5 h-5 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center flex-shrink-0">
-                    <CheckCircle2 className="w-3 h-3 text-indigo-400" />
+                  <div className="w-5 h-5 rounded-full bg-orange-50 flex items-center justify-center flex-shrink-0">
+                    <CheckCircle2 className="w-3 h-3 text-[#F26522]" />
                   </div>
-                  <span className="text-[13.5px] text-white/65">{feature}</span>
+                  <span className="text-[13.5px] text-gray-700">{feature}</span>
                 </motion.div>
               ))}
             </div>
